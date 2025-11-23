@@ -26,4 +26,95 @@ namespace Microsoft.Playwright.Tests;
 
 public class PageScrollTests : PageTestEx
 {
+    [PlaywrightTest("page-scroll.spec.ts", "should scroll to the bottom of the page")]
+    public async Task ShouldScrollToTheBottomOfThePage()
+    {
+        await Page.SetContentAsync(@"
+            <div style='height: 5000px;'>
+                <div style='position: absolute; top: 4500px;' id='target'>Target</div>
+            </div>
+        ");
+        await Page.EvaluateAsync("() => window.scrollTo(0, document.body.scrollHeight)");
+        var scrollY = await Page.EvaluateAsync<int>("() => window.scrollY");
+        Assert.Greater(scrollY, 4000);
+    }
+
+    [PlaywrightTest("page-scroll.spec.ts", "should scroll element into view")]
+    public async Task ShouldScrollElementIntoView()
+    {
+        await Page.SetContentAsync(@"
+            <div style='height: 5000px;'>
+                <div style='position: absolute; top: 4500px;' id='target'>Target</div>
+            </div>
+        ");
+        var element = await Page.QuerySelectorAsync("#target");
+        await element.ScrollIntoViewIfNeededAsync();
+        var boundingBox = await element.BoundingBoxAsync();
+        Assert.NotNull(boundingBox);
+    }
+
+    [PlaywrightTest("page-scroll.spec.ts", "should be able to get scroll position")]
+    public async Task ShouldBeAbleToGetScrollPosition()
+    {
+        await Page.SetContentAsync(@"
+            <div style='height: 5000px;'>
+                <div style='position: absolute; top: 2500px;' id='target'>Target</div>
+            </div>
+        ");
+        await Page.EvaluateAsync("() => window.scrollTo(0, 2000)");
+        var scrollY = await Page.EvaluateAsync<int>("() => window.scrollY");
+        Assert.AreEqual(2000, scrollY);
+    }
+
+    [PlaywrightTest("page-scroll.spec.ts", "should scroll with mouse wheel")]
+    public async Task ShouldScrollWithMouseWheel()
+    {
+        await Page.SetContentAsync(@"
+            <div style='height: 5000px; width: 5000px;'>
+                <div id='target'>Target</div>
+            </div>
+        ");
+        await Page.Mouse.WheelAsync(0, 1000);
+        var scrollY = await Page.EvaluateAsync<int>("() => window.scrollY");
+        Assert.Greater(scrollY, 0);
+    }
+
+    [PlaywrightTest("page-scroll.spec.ts", "should scroll horizontally")]
+    public async Task ShouldScrollHorizontally()
+    {
+        await Page.SetContentAsync(@"
+            <div style='height: 1000px; width: 5000px;'>
+                <div style='position: absolute; left: 4500px;' id='target'>Target</div>
+            </div>
+        ");
+        await Page.EvaluateAsync("() => window.scrollTo(2000, 0)");
+        var scrollX = await Page.EvaluateAsync<int>("() => window.scrollX");
+        Assert.AreEqual(2000, scrollX);
+    }
+
+    [PlaywrightTest("page-scroll.spec.ts", "should maintain scroll position on navigation")]
+    public async Task ShouldMaintainScrollPositionOnNavigation()
+    {
+        await Page.GotoAsync(Server.Prefix + "/grid.html");
+        await Page.EvaluateAsync("() => window.scrollTo(0, 500)");
+        var scrollYBefore = await Page.EvaluateAsync<int>("() => window.scrollY");
+        await Page.EvaluateAsync("() => window.history.replaceState({}, '', window.location.href)");
+        var scrollYAfter = await Page.EvaluateAsync<int>("() => window.scrollY");
+        Assert.AreEqual(scrollYBefore, scrollYAfter);
+    }
+
+    [PlaywrightTest("page-scroll.spec.ts", "should handle overflow scroll")]
+    public async Task ShouldHandleOverflowScroll()
+    {
+        await Page.SetContentAsync(@"
+            <div id='scrollable' style='height: 200px; width: 200px; overflow: scroll;'>
+                <div style='height: 1000px; width: 1000px;'>
+                    <div style='position: absolute; top: 800px; left: 800px;' id='target'>Target</div>
+                </div>
+            </div>
+        ");
+        await Page.EvaluateAsync("() => document.getElementById('scrollable').scrollTo(500, 500)");
+        var scrollTop = await Page.EvaluateAsync<int>("() => document.getElementById('scrollable').scrollTop");
+        Assert.AreEqual(500, scrollTop);
+    }
 }

@@ -41,4 +41,55 @@ public class BrowserTypeBasicTests : PlaywrightTestEx
                 _ => null
             },
             BrowserType.Name);
+
+    [PlaywrightTest("browsertype-basic.spec.ts", "browserType.executablePath should be a valid path")]
+    public void BrowserTypeExecutablePathShouldBeValidPath()
+    {
+        var path = BrowserType.ExecutablePath;
+        Assert.IsNotEmpty(path);
+        Assert.True(Path.IsPathRooted(path));
+    }
+
+    [PlaywrightTest("browsertype-basic.spec.ts", "should return correct browser name for each browser type")]
+    public void ShouldReturnCorrectBrowserNameForEachBrowserType()
+    {
+        var name = BrowserType.Name;
+        Assert.That(name, Is.EqualTo("chromium").Or.EqualTo("firefox").Or.EqualTo("webkit"));
+    }
+
+    [PlaywrightTest("browsertype-basic.spec.ts", "should have version property")]
+    public async Task ShouldHaveVersionProperty()
+    {
+        var browser = await BrowserType.LaunchAsync();
+        Assert.IsNotEmpty(browser.Version);
+        await browser.CloseAsync();
+    }
+
+    [PlaywrightTest("browsertype-basic.spec.ts", "browser version should contain numbers")]
+    public async Task BrowserVersionShouldContainNumbers()
+    {
+        var browser = await BrowserType.LaunchAsync();
+        var version = browser.Version;
+        Assert.IsTrue(version.Any(char.IsDigit), $"Browser version '{version}' should contain numbers");
+        await browser.CloseAsync();
+    }
+
+    [PlaywrightTest("browsertype-basic.spec.ts", "should be able to launch multiple browsers")]
+    public async Task ShouldBeAbleToLaunchMultipleBrowsers()
+    {
+        var browser1 = await BrowserType.LaunchAsync();
+        var browser2 = await BrowserType.LaunchAsync();
+        Assert.AreNotEqual(browser1, browser2);
+        await browser1.CloseAsync();
+        await browser2.CloseAsync();
+    }
+
+    [PlaywrightTest("browsertype-basic.spec.ts", "should be able to check if browser is connected")]
+    public async Task ShouldBeAbleToCheckIfBrowserIsConnected()
+    {
+        var browser = await BrowserType.LaunchAsync();
+        Assert.True(browser.IsConnected);
+        await browser.CloseAsync();
+        Assert.False(browser.IsConnected);
+    }
 }
