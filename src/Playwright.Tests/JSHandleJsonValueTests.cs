@@ -52,6 +52,69 @@ public class JSHandleJsonValueTests : PageTestEx
         Assert.AreEqual(a, a.b);
     }
 
+    [PlaywrightTest("jshandle-json-value.spec.ts", "should work with arrays")]
+    public async Task ShouldWorkWithArrays()
+    {
+        var aHandle = await Page.EvaluateHandleAsync("() => [1, 2, 3, 4, 5]");
+        var json = await aHandle.JsonValueAsync<int[]>();
+        Assert.AreEqual(5, json.Length);
+        Assert.AreEqual(1, json[0]);
+        Assert.AreEqual(5, json[4]);
+    }
+
+    [PlaywrightTest("jshandle-json-value.spec.ts", "should work with nested objects")]
+    public async Task ShouldWorkWithNestedObjects()
+    {
+        var aHandle = await Page.EvaluateHandleAsync("() => ({ outer: { inner: { value: 42 } } })");
+        var json = await aHandle.JsonValueAsync<JsonElement>();
+        Assert.AreEqual(42, json.GetProperty("outer").GetProperty("inner").GetProperty("value").GetInt32());
+    }
+
+    [PlaywrightTest("jshandle-json-value.spec.ts", "should work with numbers")]
+    public async Task ShouldWorkWithNumbers()
+    {
+        var aHandle = await Page.EvaluateHandleAsync("() => 123");
+        var json = await aHandle.JsonValueAsync<int>();
+        Assert.AreEqual(123, json);
+    }
+
+    [PlaywrightTest("jshandle-json-value.spec.ts", "should work with strings")]
+    public async Task ShouldWorkWithStrings()
+    {
+        var aHandle = await Page.EvaluateHandleAsync("() => 'hello world'");
+        var json = await aHandle.JsonValueAsync<string>();
+        Assert.AreEqual("hello world", json);
+    }
+
+    [PlaywrightTest("jshandle-json-value.spec.ts", "should work with booleans")]
+    public async Task ShouldWorkWithBooleans()
+    {
+        var trueHandle = await Page.EvaluateHandleAsync("() => true");
+        var trueValue = await trueHandle.JsonValueAsync<bool>();
+        Assert.True(trueValue);
+
+        var falseHandle = await Page.EvaluateHandleAsync("() => false");
+        var falseValue = await falseHandle.JsonValueAsync<bool>();
+        Assert.False(falseValue);
+    }
+
+    [PlaywrightTest("jshandle-json-value.spec.ts", "should work with null")]
+    public async Task ShouldWorkWithNull()
+    {
+        var aHandle = await Page.EvaluateHandleAsync("() => null");
+        var json = await aHandle.JsonValueAsync<string>();
+        Assert.Null(json);
+    }
+
+    [PlaywrightTest("jshandle-json-value.spec.ts", "should work with mixed types in arrays")]
+    public async Task ShouldWorkWithMixedTypesInArrays()
+    {
+        var aHandle = await Page.EvaluateHandleAsync("() => [1, 'two', true, null, { key: 'value' }]");
+        var json = await aHandle.JsonValueAsync<JsonElement>();
+        Assert.AreEqual(JsonValueKind.Array, json.ValueKind);
+        Assert.AreEqual(5, json.GetArrayLength());
+    }
+
     private class RecursiveCircularObjectClass
     {
         public RecursiveCircularObjectClass b { get; set; }
